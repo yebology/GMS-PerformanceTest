@@ -1,26 +1,49 @@
-.PHONY: load vol-assets vol-notifications vol-dashboard volume all clean seed-assets seed-notifications seed-employee cleanup
+.PHONY: load stress load-rest stress-rest ws-smoke ws-load ws-stress vol-assets vol-notifications vol-dashboard volume all clean seed-assets seed-notifications seed-employee cleanup
 
 git-commit:
 	@git add .
 	@git status
 	@read -p "Commit message: " msg; \
-	git commit -m "$$msg"
+	git commit -m "$msg"
 	
-# === K6 Tests ===
-load:
-	mkdir -p reports
+# === Combined Tests (REST /assets + WebSocket /notifications) ===
+load: load-rest ws-load
+
+stress: stress-rest ws-stress
+
+# === REST API Tests ===
+load-rest:
+	mkdir -p reports-2
 	k6 run tests/load-testing.js
 
+stress-rest:
+	mkdir -p reports-2
+	k6 run tests/stress-testing.js
+
+# === WebSocket Tests ===
+ws-smoke:
+	mkdir -p reports-2
+	k6 run tests/ws/ws-smoke.js
+
+ws-load:
+	mkdir -p reports-2
+	k6 run tests/ws/ws-load.js
+
+ws-stress:
+	mkdir -p reports-2
+	k6 run tests/ws/ws-stress.js
+
+# === Volume Tests ===
 vol-assets:
-	mkdir -p reports/volume
+	mkdir -p reports-2/volume
 	k6 run -e DATA_SIZE=$(DATA_SIZE) tests/volume/vol-assets.js
 
 vol-notifications:
-	mkdir -p reports/volume
-	k6 run -e DATA_SIZE=$(DATA_SIZE) tests/volume/vol-notifications.js
+	mkdir -p reports-2/volume
+	k6 run -e DATA_SIZE=$(DATA_SIZE) tests/ws/ws-vol-notifications.js
 
 vol-dashboard:
-	mkdir -p reports/volume
+	mkdir -p reports-2/volume
 	k6 run -e DATA_SIZE=$(DATA_SIZE) tests/volume/vol-dashboard-employee.js
 
 volume: vol-assets vol-notifications vol-dashboard
@@ -46,7 +69,7 @@ cleanup:
 
 # === Cleanup Reports ===
 clean:
-	rm -rf reports/
+	rm -rf reports-2/
 
 ROLE_ARN ?= arn:aws:iam::562280272590:role/AssumeYobel
 SESSION_NAME ?= my-session

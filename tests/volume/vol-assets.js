@@ -43,7 +43,7 @@ const TEST_META = {
 
 export function handleSummary(data) {
   return {
-    [`reports/volume/vol-assets-${DATA_SIZE}.md`]: markdownSummary(data, TEST_META),
+    [`reports-2/volume/vol-assets-${DATA_SIZE}.md`]: markdownSummary(data, TEST_META),
     stdout: textSummary(data, { indent: " ", enableColors: true }),
   };
 }
